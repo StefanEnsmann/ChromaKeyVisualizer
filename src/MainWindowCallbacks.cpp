@@ -20,6 +20,30 @@ void MainWindow::OnAbout(wxCommandEvent& event) {
 	wxMessageBox("This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION);
 }
 
+void MainWindow::OnBackgroundSliderChanged(wxScrollEvent& event) {
+
+}
+
+void MainWindow::OnChromaColorChanged(wxColourPickerEvent& event) {
+
+}
+
+void MainWindow::OnSimilaritySliderChanged(wxScrollEvent& event) {
+	similaritySpin->SetValue(event.GetPosition());
+}
+
+void MainWindow::OnSimilaritySpinChanged(wxSpinEvent& event) {
+	similaritySlider->SetValue(event.GetValue());
+}
+
+void MainWindow::OnSmoothnessSliderChanged(wxScrollEvent& event) {
+	smoothnessSpin->SetValue(event.GetPosition());
+}
+
+void MainWindow::OnSmoothnessSpinChanged(wxSpinEvent& event) {
+	smoothnessSlider->SetValue(event.GetValue());
+}
+
 void MainWindow::OnMipMappingSliderChanged(wxScrollEvent& event) {
 	mipMappingSpin->SetValue(event.GetPosition());
 }

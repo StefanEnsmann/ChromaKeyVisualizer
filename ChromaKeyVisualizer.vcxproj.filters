@@ -24,12 +24,18 @@
     <ClCompile Include="src\MainWindowCallbacks.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\WebcamInterface.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="src\MainWindow.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WebcamInterface.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

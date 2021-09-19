@@ -1,14 +1,31 @@
 #pragma once
 #include "Main.h"
 
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
+#include <wx/glcanvas.h>
+#include <wx/clrpicker.h>
+#include <wx/spinctrl.h>
+#include <wx/tglbtn.h>
+#include<wx/event.h>
+
+/// <summary>
+/// The main application
+/// </summary>
 class ChromaKeyVisualizer : public wxApp {
 public:
+	/// <summary>
+	/// Initializes the application and creates a MainWindow
+	/// </summary>
+	/// <returns>bool to indicate successful initialization</returns>
 	virtual bool OnInit();
 };
 
 class MainWindow : public wxFrame {
 public:
-	MainWindow();
+	MainWindow(std::vector<int>& availableDevices);
 private:
 	wxSlider* backgroundSlider;
 
@@ -24,8 +41,8 @@ private:
 	wxToggleButton* rgbButton;
 	wxToggleButton* ycbcrButton;
 
-	void SetupUI();
-	void SetupUI_Menu(int cameraCount);
+	void SetupUI(std::vector<int>& availableDevices);
+	void SetupUI_Menu(std::vector<int>& availableDevices);
 	void SetupUI_StatusBar();
 	void SetupUI_Main();
 	void SetupUI_GLCanvas(wxPanel* parent, wxSizer* sizer);
@@ -41,6 +58,12 @@ private:
 	void OnExplanation(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 
+	void OnBackgroundSliderChanged(wxScrollEvent& event);
+	void OnChromaColorChanged(wxColourPickerEvent& event);
+	void OnSimilaritySliderChanged(wxScrollEvent& event);
+	void OnSimilaritySpinChanged(wxSpinEvent& event);
+	void OnSmoothnessSliderChanged(wxScrollEvent& event);
+	void OnSmoothnessSpinChanged(wxSpinEvent& event);
 	void OnMipMappingSliderChanged(wxScrollEvent& event);
 	void OnMipMappingSpinChanged(wxSpinEvent& event);
 	void OnCubeStyleChanged(wxCommandEvent& event);
@@ -49,17 +72,18 @@ private:
 enum MenuID {
 	menuID_EXPORT = 1,
 	menuID_EXPLANATION = 2,
-	menuID_CAMERA = 100
+	menuID_CAMERA = 10
 };
 
 enum UIID {
-	uiBACKGROUND_SLIDER = 200,
-	uiSIMILARITY_SLIDER = 300,
-	uiSIMILARITY_SPIN = 301,
-	uiSMOOTHNESS_SLIDER = 400,
-	uiSMOOTHNESS_SPIN = 401,
-	uiMIPMAP_SLIDER = 500,
-	uiMIPMAP_SPIN = 501,
-	uiRGB_BUTTON = 600,
-	uiYCBCR_BUTTON = 601
+	uiBACKGROUND_SLIDER = 20,
+	uiCHROMACOLOR_PICKER = 30,
+	uiSIMILARITY_SLIDER = 40,
+	uiSIMILARITY_SPIN = 41,
+	uiSMOOTHNESS_SLIDER = 50,
+	uiSMOOTHNESS_SPIN = 51,
+	uiMIPMAP_SLIDER = 60,
+	uiMIPMAP_SPIN = 61,
+	uiRGB_BUTTON = 70,
+	uiYCBCR_BUTTON = 71
 };

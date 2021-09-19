@@ -1,17 +1,20 @@
 #include "MainWindow.h"
+#include "WebcamInterface.h"
 
 bool ChromaKeyVisualizer::OnInit() {
-	MainWindow* frame = new MainWindow();
+	std::vector<int> availableDevices;
+	WebcamInterface::CountCameraDevices(availableDevices);
+	MainWindow* frame = new MainWindow(availableDevices);
 	frame->Show(true);
 	return true;
 }
 
-MainWindow::MainWindow() : wxFrame(NULL, wxID_ANY, "Hello World") {
-	SetupUI();
+MainWindow::MainWindow(std::vector<int>& availableDevices) : wxFrame(NULL, wxID_ANY, "Chroma Key Visualizer") {
+	SetupUI(availableDevices);
 }
 
-void MainWindow::SetupUI() {
-	SetupUI_Menu(3);
+void MainWindow::SetupUI(std::vector<int>& availableDevices) {
+	SetupUI_Menu(availableDevices);
 	SetupUI_StatusBar();
 	SetupUI_Main();
 	Fit();
@@ -19,7 +22,7 @@ void MainWindow::SetupUI() {
 	Maximize();
 }
 
-void MainWindow::SetupUI_Menu(int cameraCount) {
+void MainWindow::SetupUI_Menu(std::vector<int>& availableDevices) {
 	wxMenu* menuFile = new wxMenu;
 	menuFile->Append(menuID_EXPORT, "Export\tCtrl-E", "Exports the current configuration to a JSON file");
 	menuFile->AppendSeparator();
@@ -27,8 +30,8 @@ void MainWindow::SetupUI_Menu(int cameraCount) {
 
 	wxMenu* menuCamera = new wxMenu;
 	menuCamera->AppendRadioItem(menuID_CAMERA - 1, "No camera\tCtrl-N", "Disable camera processing");
-	for (int i = 0; i < cameraCount; ++i) {
-		menuCamera->AppendRadioItem(menuID_CAMERA + i, "Camera " + std::to_string(i) + "\tCtrl-" + std::to_string(i), "Select camera for processing");
+	for (int i = 0; i < availableDevices.size(); ++i) {
+		menuCamera->AppendRadioItem(menuID_CAMERA + availableDevices[i], "Camera " + std::to_string(availableDevices[i]) + "\tCtrl-" + std::to_string(availableDevices[i]), "Select camera for processing");
 	}
 
 	wxMenu* menuHelp = new wxMenu;
@@ -46,8 +49,8 @@ void MainWindow::SetupUI_Menu(int cameraCount) {
 	Bind(wxEVT_MENU, &MainWindow::OnExport, this, menuID_EXPORT);
 	Bind(wxEVT_MENU, &MainWindow::OnExit, this, wxID_EXIT);
 
-	for (int i = -1; i < cameraCount; ++i) {
-		Bind(wxEVT_MENU, &MainWindow::OnCameraSelect, this, menuID_CAMERA + i);
+	for (int i = -1; i < availableDevices.size(); ++i) {
+		Bind(wxEVT_MENU, &MainWindow::OnCameraSelect, this, menuID_CAMERA + availableDevices[i]);
 	}
 
 	Bind(wxEVT_MENU, &MainWindow::OnExplanation, this, menuID_EXPLANATION);
@@ -95,6 +98,8 @@ void MainWindow::SetupUI_BackgroundColorBox(wxPanel* parent, wxSizer* sizer) {
 	backgroundSlider = new wxSlider(backgroundColorBoxSizer->GetStaticBox(), uiBACKGROUND_SLIDER, 10, 0, 255);
 	backgroundColorBoxSizer->Add(backgroundSlider, wxSizerFlags(1).Expand());
 
+	Bind(wxEVT_SCROLL_CHANGED, &MainWindow::OnBackgroundSliderChanged, this, uiBACKGROUND_SLIDER);
+
 	sizer->Add(backgroundColorBoxSizer, wxSizerFlags(0).Expand().Border(wxALL, 4));
 }
 
@@ -105,9 +110,11 @@ void MainWindow::SetupUI_ChromaValues(wxPanel* parent, wxSizer* sizer) {
 	chromaValuesGrid->AddGrowableCol(1, 1);
 
 	chromaValuesGrid->Add(new wxStaticText(parent, wxID_ANY, "Color"), wxSizerFlags(0).CenterVertical());
-	wxColourPickerCtrl* colorPicker = new wxColourPickerCtrl(parent, wxID_ANY, wxColour(0, 255, 0));
+	wxColourPickerCtrl* colorPicker = new wxColourPickerCtrl(parent, uiCHROMACOLOR_PICKER, wxColour(0, 255, 0));
 	chromaValuesGrid->Add(colorPicker, wxSizerFlags(0).CenterHorizontal());
 	chromaValuesGrid->AddSpacer(0);
+
+	Bind(wxEVT_COLOURPICKER_CHANGED, &MainWindow::OnChromaColorChanged, this, uiCHROMACOLOR_PICKER);
 
 	chromaValuesGrid->Add(new wxStaticText(parent, wxID_ANY, "Similarity"), wxSizerFlags(0).CenterVertical());
 	similaritySlider = new wxSlider(parent, uiSIMILARITY_SLIDER, 400, 1, 1000);
@@ -122,6 +129,12 @@ void MainWindow::SetupUI_ChromaValues(wxPanel* parent, wxSizer* sizer) {
 	chromaValuesGrid->Add(smoothnessSpin, wxSizerFlags(0).CenterHorizontal());
 
 	chromaValuesSizer->Add(chromaValuesGrid, wxSizerFlags(0).Expand().Border(wxALL, 8));
+
+	Bind(wxEVT_SCROLL_CHANGED, &MainWindow::OnSimilaritySliderChanged, this, uiSIMILARITY_SLIDER);
+	Bind(wxEVT_SPINCTRL, &MainWindow::OnSimilaritySpinChanged, this, uiSIMILARITY_SPIN);
+
+	Bind(wxEVT_SCROLL_CHANGED, &MainWindow::OnSmoothnessSliderChanged, this, uiSMOOTHNESS_SLIDER);
+	Bind(wxEVT_SPINCTRL, &MainWindow::OnSmoothnessSpinChanged, this, uiSMOOTHNESS_SPIN);
 
 	sizer->Add(chromaValuesSizer, wxSizerFlags(0).Expand().Border(wxALL, 4));
 }
