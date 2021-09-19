@@ -187,6 +187,7 @@ copy "$(SolutionDir)wxmsw315ud_gl_vc14x_x64.dll" "$(TargetDir)wxmsw315ud_gl_vc14
   <ItemGroup>
     <ClCompile Include="src\MainWindow.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\MainWindowCallbacks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\MainWindow.h" />
