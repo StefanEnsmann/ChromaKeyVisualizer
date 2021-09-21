@@ -4,12 +4,13 @@
 bool ChromaKeyVisualizer::OnInit() {
 	std::vector<int> availableDevices;
 	WebcamInterface::CountCameraDevices(availableDevices);
-	MainWindow* frame = new MainWindow(availableDevices);
+	MainWindow* frame = new MainWindow(this, availableDevices);
 	frame->Show(true);
 	return true;
 }
 
-MainWindow::MainWindow(std::vector<int>& availableDevices) : wxFrame(NULL, wxID_ANY, "Chroma Key Visualizer") {
+MainWindow::MainWindow(ChromaKeyVisualizer* app, std::vector<int>& availableDevices) : wxFrame(NULL, wxID_ANY, "Chroma Key Visualizer") {
+	this->app = app;
 	SetupUI(availableDevices);
 }
 
@@ -25,19 +26,30 @@ void MainWindow::SetupUI(std::vector<int>& availableDevices) {
 void MainWindow::SetupUI_Menu(std::vector<int>& availableDevices) {
 	wxMenu* menuFile = new wxMenu;
 	menuFile->Append(menuID_EXPORT, "Export\tCtrl-E", "Exports the current configuration to a JSON file");
+	Bind(wxEVT_MENU, &MainWindow::OnExport, this, menuID_EXPORT);
+
 	menuFile->AppendSeparator();
+
 	menuFile->Append(wxID_EXIT);
+	Bind(wxEVT_MENU, &MainWindow::OnExit, this, wxID_EXIT);
 
 	wxMenu* menuCamera = new wxMenu;
 	menuCamera->AppendRadioItem(menuID_CAMERA - 1, "No camera\tCtrl-N", "Disable camera processing");
+	Bind(wxEVT_MENU, &MainWindow::OnCameraSelect, this, menuID_CAMERA -1);
 	for (int i = 0; i < availableDevices.size(); ++i) {
-		menuCamera->AppendRadioItem(menuID_CAMERA + availableDevices[i], "Camera " + std::to_string(availableDevices[i]) + "\tCtrl-" + std::to_string(availableDevices[i]), "Select camera for processing");
+		int devId = availableDevices[i];
+		menuCamera->AppendRadioItem(menuID_CAMERA + devId, "Camera " + std::to_string(devId) + "\tCtrl-" + std::to_string(devId), "Select camera for processing");
+		Bind(wxEVT_MENU, &MainWindow::OnCameraSelect, this, menuID_CAMERA + devId);
 	}
 
 	wxMenu* menuHelp = new wxMenu;
 	menuHelp->Append(menuID_EXPLANATION, "Explanation\tCtrl-X", "Shows an explanation of the underlying system");
+	Bind(wxEVT_MENU, &MainWindow::OnExplanation, this, menuID_EXPLANATION);
+
 	menuHelp->AppendSeparator();
+
 	menuHelp->Append(wxID_ABOUT);
+	Bind(wxEVT_MENU, &MainWindow::OnAbout, this, wxID_ABOUT);
 
 	wxMenuBar* menuBar = new wxMenuBar;
 	menuBar->Append(menuFile, "File");
@@ -45,16 +57,6 @@ void MainWindow::SetupUI_Menu(std::vector<int>& availableDevices) {
 	menuBar->Append(menuHelp, "Help");
 
 	SetMenuBar(menuBar);
-
-	Bind(wxEVT_MENU, &MainWindow::OnExport, this, menuID_EXPORT);
-	Bind(wxEVT_MENU, &MainWindow::OnExit, this, wxID_EXIT);
-
-	for (int i = -1; i < availableDevices.size(); ++i) {
-		Bind(wxEVT_MENU, &MainWindow::OnCameraSelect, this, menuID_CAMERA + availableDevices[i]);
-	}
-
-	Bind(wxEVT_MENU, &MainWindow::OnExplanation, this, menuID_EXPLANATION);
-	Bind(wxEVT_MENU, &MainWindow::OnAbout, this, wxID_ABOUT);
 }
 
 void MainWindow::SetupUI_StatusBar() {
@@ -172,11 +174,30 @@ void MainWindow::SetupUI_DisplayConfiguration(wxPanel* parent, wxSizer* sizer) {
 void MainWindow::SetupUI_CameraPreview(wxPanel* parent, wxSizer* sizer) {
 	wxStaticBoxSizer* cameraPreviewSizer = new wxStaticBoxSizer(wxVERTICAL, parent, "Camera preview");
 
-	wxPanel* tempPanel = new wxPanel(parent, wxID_ANY);
-	tempPanel->SetBackgroundColour(wxColour(10, 10, 10));
-	tempPanel->SetMinClientSize(wxSize(250, 200));
-	tempPanel->SetMaxClientSize(wxSize(250, 200));
-	cameraPreviewSizer->Add(tempPanel, wxSizerFlags(0));
+	webcamPreview = new wxGenericStaticBitmap(parent, wxID_ANY, wxBitmap());
+	webcamPreview->Freeze();
+	wxSize size = wxSize(webcamWidth, webcamWidth * 9 / 16);
+	webcamPreview->SetMinClientSize(size);
+	webcamPreview->SetMaxClientSize(size);
+	cameraPreviewSizer->Add(webcamPreview, wxSizerFlags(0));
 
 	sizer->Add(cameraPreviewSizer, wxSizerFlags(0).Expand().Border(wxALL, 4));
+}
+
+void MainWindow::DisableWebcam() {
+	webcamPreview->Freeze();
+	delete webcamBitmap;
+}
+
+void MainWindow::ActivateWebcam(int id) {
+	webcamBitmap = WebcamInterface::OpenCamera(id, videoCapture);
+	webcamPreview->SetBitmap(*webcamBitmap);
+	wxSize size = wxSize(webcamWidth, webcamWidth * webcamBitmap->GetHeight() / webcamBitmap->GetWidth());
+	webcamPreview->SetMinClientSize(size);
+	webcamPreview->SetMaxClientSize(size);
+	webcamPreview->Thaw();
+}
+
+void MainWindow::WriteFrameToBitmap(cv::Mat& frame) {
+
 }

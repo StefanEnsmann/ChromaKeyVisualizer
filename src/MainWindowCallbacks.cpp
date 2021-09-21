@@ -9,7 +9,12 @@ void MainWindow::OnExit(wxCommandEvent& event) {
 }
 
 void MainWindow::OnCameraSelect(wxCommandEvent& event) {
-	wxMessageBox("Camera select has been toggled", "Press", wxOK | wxICON_INFORMATION);
+	wxMessageBox("Camera select has been toggled " + std::to_string(event.GetId()), "Press", wxOK | wxICON_INFORMATION);
+	int id = event.GetId();
+	DisableWebcam();
+	if (id > menuID_CAMERA - 1) {
+		ActivateWebcam(id - menuID_CAMERA);
+	}
 }
 
 void MainWindow::OnExplanation(wxCommandEvent& event) {

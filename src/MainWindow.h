@@ -1,5 +1,6 @@
 #pragma once
 #include "Main.h"
+#include "WebcamInterface.h"
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
@@ -9,7 +10,8 @@
 #include <wx/clrpicker.h>
 #include <wx/spinctrl.h>
 #include <wx/tglbtn.h>
-#include<wx/event.h>
+#include <wx/event.h>
+#include <wx/generic/statbmpg.h>
 
 /// <summary>
 /// The main application
@@ -25,8 +27,10 @@ public:
 
 class MainWindow : public wxFrame {
 public:
-	MainWindow(std::vector<int>& availableDevices);
+	MainWindow(ChromaKeyVisualizer* app, std::vector<int>& availableDevices);
 private:
+	ChromaKeyVisualizer* app;
+
 	wxSlider* backgroundSlider;
 
 	wxSlider* similaritySlider;
@@ -40,6 +44,11 @@ private:
 
 	wxToggleButton* rgbButton;
 	wxToggleButton* ycbcrButton;
+
+	wxBitmap* webcamBitmap;
+	wxGenericStaticBitmap* webcamPreview;
+	int webcamWidth = 250;
+	cv::VideoCapture videoCapture;
 
 	void SetupUI(std::vector<int>& availableDevices);
 	void SetupUI_Menu(std::vector<int>& availableDevices);
@@ -67,6 +76,10 @@ private:
 	void OnMipMappingSliderChanged(wxScrollEvent& event);
 	void OnMipMappingSpinChanged(wxSpinEvent& event);
 	void OnCubeStyleChanged(wxCommandEvent& event);
+
+	void DisableWebcam();
+	void ActivateWebcam(int id);
+	void WriteFrameToBitmap(cv::Mat& frame);
 };
 
 enum MenuID {
