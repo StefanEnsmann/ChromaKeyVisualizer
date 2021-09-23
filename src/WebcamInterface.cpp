@@ -1,5 +1,7 @@
 #include "WebcamInterface.h"
+#include "MainWindow.h"
 #include <wx/rawbmp.h>
+#include <wx/event.h>
 
 void WebcamInterface::CountCameraDevices(std::vector<int>& cameraIndices) {
 	cv::VideoCapture cap;
@@ -12,17 +14,26 @@ void WebcamInterface::CountCameraDevices(std::vector<int>& cameraIndices) {
 	}
 }
 
-wxBitmap* WebcamInterface::OpenCamera(int id, cv::VideoCapture& videoCapture) {
-	videoCapture.release();
-	videoCapture.open(id);
-	if (videoCapture.isOpened()) {
+WebcamThread::WebcamThread(MainWindow* window, int cameraId) : wxThread(wxTHREAD_JOINABLE) {
+	this->window = window;
+	cap.open(cameraId);
+	width = 0;
+	height = 0;
+	if (cap.isOpened()) {
 		cv::Mat frame;
-		videoCapture.read(frame);
-		int width = videoCapture.get(cv::CAP_PROP_FRAME_WIDTH);
-		int height = videoCapture.get(cv::CAP_PROP_FRAME_HEIGHT);
-		std::cout << frame.type() << std::endl;
-		wxBitmap* bitmap = new wxBitmap(width, height);
-		return bitmap;
+		cap.read(frame);
+		width = frame.cols;
+		height = frame.rows;
 	}
-	return (wxBitmap*)0;
+}
+
+wxThread::ExitCode WebcamThread::Entry() {
+	while (!shouldStop) {
+		cv::Mat* frame = new cv::Mat();
+		cap >> *frame;
+		wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD, threadNEW_FRAME);
+		event->SetPayload(frame);
+		window->GetEventHandler()->QueueEvent(event);
+	}
+	return static_cast<wxThread::ExitCode>(nullptr);
 }

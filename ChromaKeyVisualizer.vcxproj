@@ -97,6 +97,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessToFile>false</PreprocessToFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -120,6 +121,7 @@ copy "$(SolutionDir)wxmsw315ud_gl_vc14x_x64.dll" "$(TargetDir)wxmsw315ud_gl_vc14
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessToFile>false</PreprocessToFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,6 +146,7 @@ copy "$(SolutionDir)wxmsw315ud_gl_vc14x_x64.dll" "$(TargetDir)wxmsw315ud_gl_vc14
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;A:\Lib\wxw\include\msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -168,6 +171,7 @@ copy "$(SolutionDir)wxmsw315ud_gl_vc14x_x64.dll" "$(TargetDir)wxmsw315ud_gl_vc14
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;A:\Lib\wxw\include\msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,14 +189,15 @@ copy "$(SolutionDir)wxmsw315ud_gl_vc14x_x64.dll" "$(TargetDir)wxmsw315ud_gl_vc14
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\convertmattowxbmp.cpp" />
     <ClCompile Include="src\MainWindow.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\MainWindowCallbacks.cpp" />
     <ClCompile Include="src\WebcamInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\convertmattowxbmp.h" />
     <ClInclude Include="src\MainWindow.h" />
-    <ClInclude Include="src\Main.h" />
     <ClInclude Include="src\WebcamInterface.h" />
   </ItemGroup>
   <ItemGroup>

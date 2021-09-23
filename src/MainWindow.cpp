@@ -1,5 +1,12 @@
 #include "MainWindow.h"
 #include "WebcamInterface.h"
+#include "convertmattowxbmp.h"
+
+#include <wx/panel.h>
+#include <wx/menu.h>
+#include <wx/stattext.h>
+#include <wx/statbox.h>
+#include <wx/windowid.h>
 
 bool ChromaKeyVisualizer::OnInit() {
 	std::vector<int> availableDevices;
@@ -9,10 +16,9 @@ bool ChromaKeyVisualizer::OnInit() {
 	return true;
 }
 
-MainWindow::MainWindow(ChromaKeyVisualizer* app, std::vector<int>& availableDevices) : wxFrame(NULL, wxID_ANY, "Chroma Key Visualizer") {
-	this->app = app;
-	SetupUI(availableDevices);
-}
+wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
+EVT_THREAD(threadNEW_FRAME, MainWindow::SwapBitmaps)
+wxEND_EVENT_TABLE()
 
 void MainWindow::SetupUI(std::vector<int>& availableDevices) {
 	SetupUI_Menu(availableDevices);
@@ -35,7 +41,7 @@ void MainWindow::SetupUI_Menu(std::vector<int>& availableDevices) {
 
 	wxMenu* menuCamera = new wxMenu;
 	menuCamera->AppendRadioItem(menuID_CAMERA - 1, "No camera\tCtrl-N", "Disable camera processing");
-	Bind(wxEVT_MENU, &MainWindow::OnCameraSelect, this, menuID_CAMERA -1);
+	Bind(wxEVT_MENU, &MainWindow::OnCameraSelect, this, menuID_CAMERA - 1);
 	for (int i = 0; i < availableDevices.size(); ++i) {
 		int devId = availableDevices[i];
 		menuCamera->AppendRadioItem(menuID_CAMERA + devId, "Camera " + std::to_string(devId) + "\tCtrl-" + std::to_string(devId), "Select camera for processing");
@@ -185,19 +191,39 @@ void MainWindow::SetupUI_CameraPreview(wxPanel* parent, wxSizer* sizer) {
 }
 
 void MainWindow::DisableWebcam() {
-	webcamPreview->Freeze();
-	delete webcamBitmap;
+	if (thread) {
+		thread->ShouldStop();
+		thread->Wait();
+		delete thread;
+	}
+	if (webcamBitmapA) {
+		delete webcamBitmapA;
+	}
+	if (webcamBitmapB) {
+		delete webcamBitmapB;
+	}
+	thread = NULL;
+	webcamBitmapA = NULL;
+	webcamBitmapB = NULL;
+	isWebcamBitmapA = true;
 }
 
 void MainWindow::ActivateWebcam(int id) {
-	webcamBitmap = WebcamInterface::OpenCamera(id, videoCapture);
-	webcamPreview->SetBitmap(*webcamBitmap);
-	wxSize size = wxSize(webcamWidth, webcamWidth * webcamBitmap->GetHeight() / webcamBitmap->GetWidth());
+	thread = new WebcamThread(this, id);
+	webcamBitmapA = new wxBitmap(thread->GetWidth(), thread->GetHeight(), 24);
+	webcamBitmapB = new wxBitmap(thread->GetWidth(), thread->GetHeight(), 24);
+	wxSize size = wxSize(webcamWidth, webcamWidth * thread->GetHeight() / thread->GetWidth());
 	webcamPreview->SetMinClientSize(size);
 	webcamPreview->SetMaxClientSize(size);
-	webcamPreview->Thaw();
+
+	thread->Run();
 }
 
-void MainWindow::WriteFrameToBitmap(cv::Mat& frame) {
-
+void MainWindow::SwapBitmaps(wxThreadEvent& event) {
+	wxBitmap* currentBitmap = isWebcamBitmapA ? webcamBitmapA : webcamBitmapB;
+	cv::Mat* frame = event.GetPayload<cv::Mat*>();
+	ConvertMatBitmapTowxBitmap(*frame, *currentBitmap);
+	webcamPreview->SetBitmap(*currentBitmap);
+	isWebcamBitmapA = !isWebcamBitmapA;
+	delete frame;
 }

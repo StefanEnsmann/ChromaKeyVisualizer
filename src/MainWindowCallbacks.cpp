@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include <wx/msgdlg.h>
 
 void MainWindow::OnExport(wxCommandEvent& event) {
 	wxMessageBox("Export has been toggled", "Press", wxOK | wxICON_INFORMATION);

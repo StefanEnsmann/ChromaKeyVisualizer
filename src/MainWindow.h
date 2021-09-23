@@ -1,17 +1,20 @@
-#pragma once
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 #include "Main.h"
 #include "WebcamInterface.h"
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
+#include <wx/slider.h>
+#include <wx/spinctrl.h>
+#include <wx/frame.h>
 #include <wx/glcanvas.h>
 #include <wx/clrpicker.h>
 #include <wx/spinctrl.h>
 #include <wx/tglbtn.h>
 #include <wx/event.h>
 #include <wx/generic/statbmpg.h>
+#include <wx/panel.h>
+
+#include <vector>
 
 /// <summary>
 /// The main application
@@ -27,7 +30,10 @@ public:
 
 class MainWindow : public wxFrame {
 public:
-	MainWindow(ChromaKeyVisualizer* app, std::vector<int>& availableDevices);
+	MainWindow(ChromaKeyVisualizer* app, std::vector<int>& availableDevices) : wxFrame(NULL, wxID_ANY, "Chroma Key Visualizer") {
+		this->app = app;
+		SetupUI(availableDevices);
+	}
 private:
 	ChromaKeyVisualizer* app;
 
@@ -45,10 +51,12 @@ private:
 	wxToggleButton* rgbButton;
 	wxToggleButton* ycbcrButton;
 
-	wxBitmap* webcamBitmap;
+	WebcamThread* thread;
+	wxBitmap* webcamBitmapA;
+	wxBitmap* webcamBitmapB;
+	bool isWebcamBitmapA = true;
 	wxGenericStaticBitmap* webcamPreview;
 	int webcamWidth = 250;
-	cv::VideoCapture videoCapture;
 
 	void SetupUI(std::vector<int>& availableDevices);
 	void SetupUI_Menu(std::vector<int>& availableDevices);
@@ -79,7 +87,9 @@ private:
 
 	void DisableWebcam();
 	void ActivateWebcam(int id);
-	void WriteFrameToBitmap(cv::Mat& frame);
+	void SwapBitmaps(wxThreadEvent& event);
+
+	wxDECLARE_EVENT_TABLE();
 };
 
 enum MenuID {
@@ -100,3 +110,4 @@ enum UIID {
 	uiRGB_BUTTON = 70,
 	uiYCBCR_BUTTON = 71
 };
+#endif
