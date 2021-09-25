@@ -7,13 +7,13 @@
 // Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <wx/wx.h>
 #include <wx/rawbmp.h>
 
 #include "convertmattowxbmp.h"
 
 #ifdef __WXMSW__
 
-/*
 namespace
 {
 
@@ -44,7 +44,6 @@ namespace
 
 } // unnamed namespace
 
-*/
 #endif // #ifndef __WXMSW__
 
 // See the function description in the header file.
@@ -57,7 +56,6 @@ bool ConvertMatBitmapTowxBitmap(const cv::Mat& matBitmap, wxBitmap& bitmap)
     wxCHECK(bitmap.GetWidth() == matBitmap.cols && bitmap.GetHeight() == matBitmap.rows, false);
     wxCHECK(bitmap.GetDepth() == 24, false);
 
-    /*
 #ifdef __WXMSW__
     if (bitmap.IsDIB()
         && matBitmap.isContinuous()
@@ -66,7 +64,6 @@ bool ConvertMatBitmapTowxBitmap(const cv::Mat& matBitmap, wxBitmap& bitmap)
         return ConvertMatBitmapTowxBitmapMSW(matBitmap, bitmap);
     }
 #endif
-*/
 
     wxNativePixelData           pixelData(bitmap);
     wxNativePixelData::Iterator pixelDataIt(pixelData);

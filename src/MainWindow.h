@@ -28,12 +28,19 @@ public:
 	virtual bool OnInit();
 };
 
-class MainWindow : public wxFrame {
+class MainWindow : public wxFrame, public wxThreadHelper {
 public:
 	MainWindow(ChromaKeyVisualizer* app, std::vector<int>& availableDevices) : wxFrame(NULL, wxID_ANY, "Chroma Key Visualizer") {
 		this->app = app;
 		SetupUI(availableDevices);
 	}
+	~MainWindow() {
+		cap.release();
+	}
+
+protected:
+	wxThread::ExitCode Entry() override;
+
 private:
 	ChromaKeyVisualizer* app;
 
@@ -51,7 +58,9 @@ private:
 	wxToggleButton* rgbButton;
 	wxToggleButton* ycbcrButton;
 
-	WebcamThread* thread;
+	cv::VideoCapture cap;
+	int width, height;
+
 	wxBitmap* webcamBitmapA;
 	wxBitmap* webcamBitmapB;
 	bool isWebcamBitmapA = true;
@@ -88,8 +97,10 @@ private:
 	void DisableWebcam();
 	void ActivateWebcam(int id);
 	void SwapBitmaps(wxThreadEvent& event);
+};
 
-	wxDECLARE_EVENT_TABLE();
+enum ThreadEventID {
+	threadNEW_FRAME = 1000
 };
 
 enum MenuID {

@@ -16,10 +16,6 @@ bool ChromaKeyVisualizer::OnInit() {
 	return true;
 }
 
-wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
-EVT_THREAD(threadNEW_FRAME, MainWindow::SwapBitmaps)
-wxEND_EVENT_TABLE()
-
 void MainWindow::SetupUI(std::vector<int>& availableDevices) {
 	SetupUI_Menu(availableDevices);
 	SetupUI_StatusBar();
@@ -27,6 +23,7 @@ void MainWindow::SetupUI(std::vector<int>& availableDevices) {
 	Fit();
 	Centre();
 	Maximize();
+	Bind(wxEVT_THREAD, &MainWindow::SwapBitmaps, this, threadNEW_FRAME);
 }
 
 void MainWindow::SetupUI_Menu(std::vector<int>& availableDevices) {
@@ -191,10 +188,10 @@ void MainWindow::SetupUI_CameraPreview(wxPanel* parent, wxSizer* sizer) {
 }
 
 void MainWindow::DisableWebcam() {
-	if (thread) {
-		thread->ShouldStop();
-		thread->Wait();
-		delete thread;
+	cap.release();
+
+	if (GetThread() && GetThread()->IsRunning()) {
+		GetThread()->Delete();
 	}
 	if (webcamBitmapA) {
 		delete webcamBitmapA;
@@ -202,28 +199,55 @@ void MainWindow::DisableWebcam() {
 	if (webcamBitmapB) {
 		delete webcamBitmapB;
 	}
-	thread = NULL;
 	webcamBitmapA = NULL;
 	webcamBitmapB = NULL;
 	isWebcamBitmapA = true;
 }
 
 void MainWindow::ActivateWebcam(int id) {
-	thread = new WebcamThread(this, id);
-	webcamBitmapA = new wxBitmap(thread->GetWidth(), thread->GetHeight(), 24);
-	webcamBitmapB = new wxBitmap(thread->GetWidth(), thread->GetHeight(), 24);
-	wxSize size = wxSize(webcamWidth, webcamWidth * thread->GetHeight() / thread->GetWidth());
-	webcamPreview->SetMinClientSize(size);
-	webcamPreview->SetMaxClientSize(size);
+	cap.open(id);
+	width = 0;
+	height = 0;
+	cv::Mat frame;
+	if (cap.isOpened()) {
+		cap.read(frame);
+		width = frame.cols;
+		height = frame.rows;
 
-	thread->Run();
+		webcamBitmapA = new wxBitmap(width, height, 24);
+		webcamBitmapB = new wxBitmap(width, height, 24);
+
+		wxSize size = wxSize(webcamWidth, webcamWidth * height / width);
+		webcamPreview->SetMinClientSize(size);
+		webcamPreview->SetMaxClientSize(size);
+
+		wxBitmap* currentBitmap = isWebcamBitmapA ? webcamBitmapA : webcamBitmapB;
+		ConvertMatBitmapTowxBitmap(frame, *currentBitmap);
+		webcamPreview->SetBitmap(*currentBitmap);
+
+		CreateThread(wxTHREAD_JOINABLE);
+		GetThread()->Run();
+	}
 }
 
 void MainWindow::SwapBitmaps(wxThreadEvent& event) {
 	wxBitmap* currentBitmap = isWebcamBitmapA ? webcamBitmapA : webcamBitmapB;
 	cv::Mat* frame = event.GetPayload<cv::Mat*>();
 	ConvertMatBitmapTowxBitmap(*frame, *currentBitmap);
-	webcamPreview->SetBitmap(*currentBitmap);
+	if (currentBitmap) {
+		webcamPreview->SetBitmap(*currentBitmap);
+	}
 	isWebcamBitmapA = !isWebcamBitmapA;
 	delete frame;
+}
+
+wxThread::ExitCode MainWindow::Entry() {
+	while (!GetThread()->TestDestroy()) {
+		cv::Mat* frame = new cv::Mat();
+		cap >> *frame;
+		wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD, threadNEW_FRAME);
+		event->SetPayload(frame);
+		wxQueueEvent(this, event);
+	}
+	return (wxThread::ExitCode)0;
 }
