@@ -7,6 +7,7 @@
 #include <wx/stattext.h>
 #include <wx/statbox.h>
 #include <wx/windowid.h>
+#include <wx/msgdlg.h>
 
 bool ChromaKeyVisualizer::OnInit() {
 	std::vector<int> availableDevices;
@@ -221,6 +222,8 @@ void MainWindow::ActivateWebcam(int id) {
 		webcamPreview->SetMinClientSize(size);
 		webcamPreview->SetMaxClientSize(size);
 
+		wxMessageBox("" + std::to_string(width) + " " + std::to_string(height) + " -> " + std::to_string(size.GetWidth()) + " " + std::to_string(size.GetHeight()), "");
+
 		wxBitmap* currentBitmap = isWebcamBitmapA ? webcamBitmapA : webcamBitmapB;
 		ConvertMatBitmapTowxBitmap(frame, *currentBitmap);
 		webcamPreview->SetBitmap(*currentBitmap);
@@ -233,9 +236,11 @@ void MainWindow::ActivateWebcam(int id) {
 void MainWindow::SwapBitmaps(wxThreadEvent& event) {
 	wxBitmap* currentBitmap = isWebcamBitmapA ? webcamBitmapA : webcamBitmapB;
 	cv::Mat* frame = event.GetPayload<cv::Mat*>();
-	ConvertMatBitmapTowxBitmap(*frame, *currentBitmap);
 	if (currentBitmap) {
+		ConvertMatBitmapTowxBitmap(*frame, *currentBitmap);
 		webcamPreview->SetBitmap(*currentBitmap);
+		webcamPreview->Refresh();
+		webcamPreview->Update();
 	}
 	isWebcamBitmapA = !isWebcamBitmapA;
 	delete frame;
